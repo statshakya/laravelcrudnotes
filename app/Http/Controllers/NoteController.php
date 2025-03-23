@@ -13,9 +13,23 @@ class NoteController extends Controller
      */
     public function index()
     {
-        $notes = Note::query()->orderBy('created_at','desc')->paginate(10);
+        $notes = Note::query()
+        ->where('user_id',request()->user()->id)
+        ->orderBy('created_at','desc')
+        ->paginate(10);
+        
         // dd($notes);
         return view('note.index', ['notes'=> $notes]); 
+    }
+
+    public function count()
+    {
+        $notes = Note::query()
+        ->where('user_id',request()->user()->id)
+        ->whereNotNull('updated_at')
+        ->count();
+        // dd($notes);
+        return view('dashboard', ['notes'=> $notes]);
     }
 
     /**
@@ -38,7 +52,7 @@ class NoteController extends Controller
         ]
         );
 
-        $data['user_id']= 1;
+        $data['user_id']= $request->user()->id;
         $note = Note::create($data);
         return to_route('note.show', $note)->with('message',$note->title.'Note was created');
     }
@@ -48,6 +62,10 @@ class NoteController extends Controller
      */
     public function show(Note $note)
     {
+            // dd($note);
+        if($note->user_id !== request()->user()->id){
+            abort(403);
+        }
         return view('note.show', ['note'=> $note]) ; 
     }
 
